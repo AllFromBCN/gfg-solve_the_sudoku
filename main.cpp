@@ -1,140 +1,132 @@
-#include <iostream>
-#include <vector>
-#include <vector>
-using namespace std;
-#define DE 9
+// A Backtracking program  in C++ to solve Sudoku problem
+#include <stdio.h>
 
-bool box[9][10];
-bool row[9][10];
-bool col[9][10];
-int tempSol[9];
-vector<int> emptySpace[9];
-vector<int> options[9];
+// UNASSIGNED is used for empty cells in sudoku grid
+#define UNASSIGNED 0
 
-void showmat(int mat[][9])
+// N is used for size of Sudoku grid. Size will be NxN
+#define N 9
+
+// This function finds an entry in grid that is still unassigned
+bool FindUnassignedLocation(int grid[N][N], int &row, int &col);
+
+// Checks whether it will be legal to assign num to the given row,col
+bool isSafe(int grid[N][N], int row, int col, int num);
+
+/* Takes a partially filled-in grid and attempts to assign values to
+  all unassigned locations in such a way to meet the requirements
+  for Sudoku solution (non-duplication across rows, columns, and boxes) */
+bool SolveSudoku(int grid[N][N])
 {
-    for (int i=0; i<DE; i++)
+    int row, col;
+
+    // If there is no unassigned location, we are done
+    if (!FindUnassignedLocation(grid, row, col))
+        return true; // success!
+
+    // consider digits 1 to 9
+    for (int num = 1; num <= 9; num++)
     {
-        for (int j=0; j<DE; j++)
-            cout << mat[i][j] ;
-        cout << endl;
-    }
-}
-bool checkSolution(int nthRow, int nthCol, int cand)
-{
-    //row
-    if(!row[nthRow][cand])
-    {
-        //col
-        if(!col[nthCol][cand])
+        // if looks promising
+        if (isSafe(grid, row, col, num))
         {
-            //box
-            if(!box[(nthRow/3)*3+(nthCol/3)][cand])
-            {
-                //cout << "@ " << nthRow << "," << nthCol<< ":" << cand << endl;
+            // make tentative assignment
+            grid[row][col] = num;
+
+            // return, if success, yay!
+            if (SolveSudoku(grid))
                 return true;
-            }
+
+            // failure, unmake & try again
+            grid[row][col] = UNASSIGNED;
         }
     }
+    return false; // this triggers backtracking
+}
+
+/* Searches the grid to find an entry that is still unassigned. If
+   found, the reference parameters row, col will be set the location
+   that is unassigned, and true is returned. If no unassigned entries
+   remain, false is returned. */
+bool FindUnassignedLocation(int grid[N][N], int &row, int &col)
+{
+    for (row = 0; row < N; row++)
+        for (col = 0; col < N; col++)
+            if (grid[row][col] == UNASSIGNED)
+                return true;
     return false;
 }
 
+/* Returns a boolean which indicates whether any assigned entry
+   in the specified row matches the given number. */
+bool UsedInRow(int grid[N][N], int row, int num)
+{
+    for (int col = 0; col < N; col++)
+        if (grid[row][col] == num)
+            return true;
+    return false;
+}
 
-bool solve(int mat[9][9], int nthRow, int nthEmpty) {
-    /*
-    for (int l=0; l<9; l++)
-        cout << mat[nthRow][l];
-    cout << endl;
-    */
-    if (nthEmpty == emptySpace[nthRow].size())
+/* Returns a boolean which indicates whether any assigned entry
+   in the specified column matches the given number. */
+bool UsedInCol(int grid[N][N], int col, int num)
+{
+    for (int row = 0; row < N; row++)
+        if (grid[row][col] == num)
+            return true;
+    return false;
+}
+
+/* Returns a boolean which indicates whether any assigned entry
+   within the specified 3x3 box matches the given number. */
+bool UsedInBox(int grid[N][N], int boxStartRow, int boxStartCol, int num)
+{
+    for (int row = 0; row < 3; row++)
+        for (int col = 0; col < 3; col++)
+            if (grid[row+boxStartRow][col+boxStartCol] == num)
+                return true;
+    return false;
+}
+
+/* Returns a boolean which indicates whether it will be legal to assign
+   num to the given row,col location. */
+bool isSafe(int grid[N][N], int row, int col, int num)
+{
+    /* Check if 'num' is not already placed in current row,
+       current column and current 3x3 box */
+    return !UsedInRow(grid, row, num) &&
+           !UsedInCol(grid, col, num) &&
+           !UsedInBox(grid, row - row%3 , col - col%3, num);
+}
+
+/* A utility function to print grid  */
+void printGrid(int grid[N][N])
+{
+    for (int row = 0; row < N; row++)
     {
-        cout << "FOUND" << endl;
-        for (int k=0; k<9; k++)
-            mat[nthRow][k] = tempSol[k];
-        showmat(mat);
-        return true;
-    }
-    //TIP iterator: post and pre incrementation
-    int curCol = emptySpace[nthRow][nthEmpty];
-
-    vector<int>::iterator it;
-    for (it=options[nthRow].begin(); it!=options[nthRow].end(); ++it)
-    {
-        if(checkSolution(nthRow, emptySpace[nthRow][nthEmpty], *it))
-        {
-            tempSol[curCol] = *it;
-            row[nthRow][*it] = true;
-            box[(nthRow/3)*3+(curCol/3)][*it] = true;
-            // --1
-            solve(mat, nthRow, nthEmpty+1);
-            // --2
-            //if (solve(mat, nthRow, nthEmpty+1))
-            //    return true;
-
-            //mat[nthRow][curCol] = 0;
-            row[nthRow][*it] = false;
-            box[(nthRow/3)*3+(curCol/3)][*it] = false;
-            return false; // TIP
-        }
+        for (int col = 0; col < N; col++)
+            printf("%2d", grid[row][col]);
+        printf("\n");
     }
 }
 
-int main() {
-    int T, i, j, temp;
-    cin >> T;
-    while (T--)
-    {
-        int mat[DE][DE];
-        for (i=0; i<DE; i++)
-        {
-            for (j=0; j<DE; j++)
-            {
-                box[i][j] = false;
-                row[i][j] = false;
-                col[i][j] = false;
-            }
-        }
+/* Driver Program to test above functions */
+int main()
+{
+    // 0 means unassigned cells
+    int grid[N][N] = {{3, 0, 6, 5, 0, 8, 4, 0, 0},
+                      {5, 2, 0, 0, 0, 0, 0, 0, 0},
+                      {0, 8, 7, 0, 0, 0, 0, 3, 1},
+                      {0, 0, 3, 0, 1, 0, 0, 8, 0},
+                      {9, 0, 0, 8, 6, 3, 0, 0, 5},
+                      {0, 5, 0, 0, 9, 0, 6, 0, 0},
+                      {1, 3, 0, 0, 0, 0, 2, 5, 0},
+                      {0, 0, 0, 0, 0, 0, 0, 7, 4},
+                      {0, 0, 5, 2, 0, 6, 3, 0, 0}};
+    if (SolveSudoku(grid) == true)
+        printGrid(grid);
+    else
+        printf("No solution exists");
 
-        for (i=0; i<DE; i++)
-        {
-            for (j=0; j<DE; j++)
-            {
-                cin >> temp;
-                mat[i][j] = temp;
-                if(temp==0)
-                    emptySpace[i].push_back(j);
-
-                row[i][temp]=true;
-                col[j][temp]=true;
-                box[(i/3)*3+(j/3)][temp]=true;
-            }
-        }
-        for (i=0; i<DE; i++)
-        {
-            for (j=1; j<10; j++)
-                if (row[i][j]==false)
-                    options[i].push_back(j);
-            /*
-            list<int>::iterator it;
-            cout << "options..." <<endl;
-            for (it=emptySpace[i].begin(); it!=emptySpace[i].end(); ++it)
-                cout << *it;
-            cout<< endl;
-             */
-
-        }
-        cout << emptySpace[0].back() << endl;
-
-        for (i=0; i<DE; i++)
-        {
-            for (j=0; j<DE; j++)
-                tempSol[j] = mat[i][j];
-
-            solve(mat, i, 0);
-            cout << endl;
-        }
-
-        showmat(mat);
-    }
     return 0;
 }
