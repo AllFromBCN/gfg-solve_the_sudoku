@@ -68,7 +68,7 @@ bool solve(int mat[9][9], int nthRow, int nthEmpty) {
             mat[nthRow][curCol] = 0;
             row[nthRow][*it] = false;
             box[(nthRow/3)*3+(curCol/3)][*it] = false;
-            //return false; // TIP
+            return false; // TIP
         }
     }
 }
