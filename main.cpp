@@ -7,8 +7,18 @@ using namespace std;
 bool abox[9][10];
 bool arow[9][10];
 bool acol[9][10];
-vector<int> emptySpace[9];
 vector<int> options[9];
+
+void setMat(int mat[][9], int i, int j, int num, bool set)
+{
+    if (set)
+        mat[i][j] = num;
+    else mat[i][j] = 0;
+
+    arow[i][num]=set;
+    acol[j][num]=set;
+    abox[(i/3)*3+(j/3)][num]=set;
+}
 
 void showmat(int mat[][9])
 {
@@ -53,16 +63,10 @@ bool solve(int mat[9][9]) {
     {
         if (checkSolution(row, col, *it))
         {
-            mat[row][col] = *it;
-            abox[(row/3)*3+(col/3)][*it]=true;
-            arow[row][*it]=true;
-            acol[col][*it]=true;
+            setMat(mat, row, col, *it, true);
             if (solve(mat))
                 return true;
-            mat[row][col] = 0;
-            abox[(row/3)*3+(col/3)][*it]=false;
-            arow[row][*it]=false;
-            acol[col][*it]=false;
+            setMat(mat, row, col, *it, false);
         }
     }
 }
@@ -89,13 +93,7 @@ int main() {
             for (j=0; j<DE; j++)
             {
                 cin >> temp;
-                mat[i][j] = temp;
-                if(temp==0)
-                    emptySpace[i].push_back(j);
-
-                arow[i][temp]=true;
-                acol[j][temp]=true;
-                abox[(i/3)*3+(j/3)][temp]=true;
+                setMat(mat,i,j,temp, true);
             }
         }
         for (i=0; i<DE; i++)
@@ -105,21 +103,11 @@ int main() {
                     options[i].push_back(j);
         }
 
-        for (i=0; i<DE; i++)
-        {
-            vector<int>::iterator it;
-            for (it=options[i].begin(); it!=options[i].end(); ++it)
-                cout << *it << '\t';
-
-            cout << endl;
-        }
-
         solve(mat);
+        showmat(mat);
 
         for (i=0; i<DE; i++)
             options[i].clear();
-
-        showmat(mat);
     }
     return 0;
 }
