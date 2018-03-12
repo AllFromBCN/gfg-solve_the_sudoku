@@ -6,7 +6,8 @@ using namespace std;
 
 bool box[9][10];
 bool row[9][10];
-//bool col[9][10];
+bool col[9][10];
+int tempSol[9];
 vector<int> emptySpace[9];
 vector<int> options[9];
 
@@ -25,7 +26,7 @@ bool checkSolution(int nthRow, int nthCol, int cand)
     if(!row[nthRow][cand])
     {
         //col
-        //if(!col[nthCol][cand])
+        if(!col[nthCol][cand])
         {
             //box
             if(!box[(nthRow/3)*3+(nthCol/3)][cand])
@@ -40,14 +41,17 @@ bool checkSolution(int nthRow, int nthCol, int cand)
 
 
 bool solve(int mat[9][9], int nthRow, int nthEmpty) {
-
+    /*
     for (int l=0; l<9; l++)
         cout << mat[nthRow][l];
     cout << endl;
-
+    */
     if (nthEmpty == emptySpace[nthRow].size())
     {
         cout << "FOUND" << endl;
+        for (int k=0; k<9; k++)
+            mat[nthRow][k] = tempSol[k];
+        showmat(mat);
         return true;
     }
     //TIP iterator: post and pre incrementation
@@ -58,14 +62,16 @@ bool solve(int mat[9][9], int nthRow, int nthEmpty) {
     {
         if(checkSolution(nthRow, emptySpace[nthRow][nthEmpty], *it))
         {
-            mat[nthRow][curCol] = *it;
+            tempSol[curCol] = *it;
             row[nthRow][*it] = true;
             box[(nthRow/3)*3+(curCol/3)][*it] = true;
+            // --1
+            solve(mat, nthRow, nthEmpty+1);
+            // --2
+            //if (solve(mat, nthRow, nthEmpty+1))
+            //    return true;
 
-            if (solve(mat, nthRow, nthEmpty+1))
-                return true;
-
-            mat[nthRow][curCol] = 0;
+            //mat[nthRow][curCol] = 0;
             row[nthRow][*it] = false;
             box[(nthRow/3)*3+(curCol/3)][*it] = false;
             return false; // TIP
@@ -85,7 +91,7 @@ int main() {
             {
                 box[i][j] = false;
                 row[i][j] = false;
-                //col[i][j] = false;
+                col[i][j] = false;
             }
         }
 
@@ -99,7 +105,7 @@ int main() {
                     emptySpace[i].push_back(j);
 
                 row[i][temp]=true;
-                //col[j][temp]=true;
+                col[j][temp]=true;
                 box[(i/3)*3+(j/3)][temp]=true;
             }
         }
@@ -121,6 +127,9 @@ int main() {
 
         for (i=0; i<DE; i++)
         {
+            for (j=0; j<DE; j++)
+                tempSol[j] = mat[i][j];
+
             solve(mat, i, 0);
             cout << endl;
         }
